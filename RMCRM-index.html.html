@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ITO & MARUYAMA CRM — 営業支援管理システム</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'Noto Sans JP', 'sans-serif'],
+            mono: ['DM Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --surface: #ffffff;
+      --border: #e4e7ec;
+      --border-strong: #cdd0d8;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --accent: #0ea5e9;
+      --accent-dark: #0284c7;
+      --accent-bg: #f0f9ff;
+      --teal: #0d9488;
+      --teal-bg: #f0fdfa;
+      --header-bg: #0f172a;
+      --sidebar-bg: #ffffff;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body { background: var(--bg); font-feature-settings: "kern" 1, "liga" 1; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+    .custom-modal-backdrop {
+      background-color: rgba(2, 8, 23, 0.5);
+      backdrop-filter: blur(6px);
+    }
+
+    /* Nav tab active state */
+    .nav-tab-btn.active {
+      background: var(--header-bg);
+      color: white;
+    }
+
+    /* Smooth tab transitions */
+    .tab-content { animation: fadeIn 0.18s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Phase badge pill */
+    .phase-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+
+    /* Stat card hover */
+    .stat-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.07); }
+
+    /* Table row hover */
+    .client-row:hover { background: #f9fafb; }
+    .client-row td { transition: background 0.1s; }
+
+    /* Button micro-interaction */
+    button:active { transform: scale(0.97); }
+
+    /* Toast style override */
+    .toast-item {
+      border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Direction text monospace */
+    #direction-text-container { font-family: 'DM Mono', monospace; letter-spacing: 0.01em; }
+
+    /* Chat bubble polish */
+    .chat-bubble { line-height: 1.65; word-break: break-word; }
+
+    /* Summary bar */
+    .summary-strip {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      border-radius: var(--radius);
+    }
+
+    /* Sidebar active indicator */
+    .nav-active {
+      background: #0f172a !important;
+      color: white !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    /* Deadline alert pulse */
+    .deadline-alert { animation: pulseRed 2s ease infinite; }
+    @keyframes pulseRed {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.75; }
+    }
+
+    /* Portal header gradient */
+    .portal-header-accent {
+      background: linear-gradient(90deg, #f0fdfa 0%, #e0f2fe 100%);
+      border-left: 3px solid var(--teal);
+    }
+  </style>
+</head>
+<body class="bg-[#f5f6f8] text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-[#0f172a] text-white py-3.5 px-6 shadow-lg flex justify-between items-center sticky top-0 z-30 border-b border-white/5">
+    <div class="flex items-center gap-3.5">
+      <div class="relative">
+        <div class="bg-gradient-to-br from-teal-400 to-sky-500 w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20">
+          <i class="fa-solid fa-rocket text-base text-slate-900"></i>
+        </div>
+        <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-[#0f172a]"></div>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold tracking-tight leading-none">ITO &amp; MARUYAMA CRM</h1>
+        <p class="text-[11px] text-slate-400 mt-0.5 leading-none">営業支援管理 &amp; ディレクション v3.0</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3 text-sm">
+      <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-lg border border-white/10">
+        <div class="w-5 h-5 rounded-full bg-gradient-to-br from-sky-400 to-teal-500 flex items-center justify-center text-[9px] font-black text-white shrink-0" id="header-user-avatar">伊</div>
+        <select id="header-user-select" onchange="switchCurrentUser(this.value)" class="bg-transparent text-xs text-white font-semibold focus:outline-none cursor-pointer">
+          <option value="伊藤" class="bg-slate-900 text-white">伊藤様 (メイン)</option>
+          <option value="丸山" class="bg-slate-900 text-white">丸山様 (アシスタント)</option>
+        </select>
+      </div>
+
+      <button onclick="if(confirm('デモデータを初期状態に戻しますか？')) { localStorage.removeItem('ito_maru_crm_state'); location.reload(); }" class="text-xs text-slate-400 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg border border-white/10">
+        <i class="fa-solid fa-rotate-left mr-1.5 text-[11px]"></i>リセット
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Contents Wrapper -->
+  <main class="flex-grow flex flex-col lg:flex-row">
+    <!-- Sidebar / Tab Navigation -->
+    <aside class="w-full lg:w-60 bg-white border-r border-slate-200 p-4 flex flex-col gap-1 shrink-0">
+      <div class="text-[10px] font-bold text-slate-400 uppercase px-3 mb-3 tracking-widest">メインメニュー</div>
+      
+      <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="nav-tab-btn flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 bg-slate-900 text-white shadow-sm">
+        <span class="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center shrink-0"><i class="fa-solid fa-rectangle-list text-sm"></i></span>
+        <span>企業一覧・管理</span>
+      </button>
+
+      <button onclick="switchTab('tasks')" id="btn-tab-tasks" class="nav-tab-btn flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+        <span class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-indigo-500"><i class="fa-solid fa-check-double text-sm"></i></span>
+        <span>タスクボード (6月)</span>
+      </button>
+
+      <button onclick="switchTab('metrics')" id="btn-tab-metrics" class="nav-tab-btn flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+        <span class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-sky-500"><i class="fa-solid fa-chart-line text-sm"></i></span>
+        <span>定例用アポ推移</span>
+      </button>
+
+      <button onclick="switchTab('chat')" id="btn-tab-chat" class="nav-tab-btn flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-slate-600 hover:bg-slate-50 hover:text-slate-900 w-full text-left">
+        <span class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-sky-500"><i class="fa-solid fa-comments text-sm"></i></span>
+          <span>社内相談チャット</span>
+        </span>
+        <span id="chat-badge-count" class="hidden bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">New</span>
+      </button>
+
+      <!-- Invisible tab button for portal navigation routing -->
+      <button onclick="switchTab('portal')" id="btn-tab-portal" class="nav-tab-btn hidden items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600">
+        <span class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-teal-500"><i class="fa-solid fa-folder-open text-sm"></i></span>
+        <span>企業専用ポータル</span>
+      </button>
+
+      <div class="border-t border-slate-100 my-4"></div>
+      
+      <div class="text-[10px] font-bold text-slate-400 uppercase px-3 mb-2 tracking-widest">外部ショートカット</div>
+      <a href="https://mem-bers.jp/chat/152788" target="_blank" class="flex items-center justify-between text-slate-500 hover:text-slate-900 text-xs px-3 py-2 hover:bg-slate-50 rounded-xl font-semibold transition-all group">
+        <span class="flex items-center gap-2.5">
+          <span class="w-6 h-6 rounded-md bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-comments text-white text-[10px]"></i>
+          </span>
+          MEMBER-S チャット
+        </span>
+        <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-0 group-hover:opacity-100 transition-all"></i>
+      </a>
+
+      <!-- Bottom user card -->
+      <div class="mt-auto pt-4 border-t border-slate-100">
+        <div class="flex items-center gap-3 px-2 py-2.5 rounded-xl bg-slate-50 border border-slate-100">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-teal-500 flex items-center justify-center text-xs font-black text-white shrink-0" id="sidebar-user-avatar">伊</div>
+          <div>
+            <p class="text-xs font-bold text-slate-800" id="sidebar-user-name">伊藤様</p>
+            <p class="text-[10px] text-slate-400">ログイン中</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content Display Area -->
+    <section class="flex-grow p-6 overflow-x-hidden">
+      <!-- CUSTOM TOAST CONTAINER (Replaces Alert) -->
+      <div id="toast-container" class="fixed top-20 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+      <!-- TAB 1: DASHBOARD / CLIENT LIST -->
+      <div id="tab-dashboard" class="tab-content block space-y-5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900 tracking-tight">営業支援先 企業一覧</h2>
+            <p class="text-slate-500 text-sm mt-0.5">企業名をクリックして<strong>専用カルテ</strong>へ。ディレクション・ログ管理もここから。</p>
+          </div>
+          <button onclick="openAddClientModal()" class="bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2 shrink-0">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>新規企業を追加</span>
+          </button>
+        </div>
+
+        <!-- Summary strip -->
+        <div id="dashboard-summary" class="summary-strip p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-white">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-building text-sky-300 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-[10px] text-white/50 uppercase font-bold tracking-wider">支援企業数</p>
+              <p id="stat-total" class="text-xl font-black leading-tight">0 社</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-circle-exclamation text-amber-300 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-[10px] text-white/50 uppercase font-bold tracking-wider">要対応（期限超過）</p>
+              <p id="stat-overdue" class="text-xl font-black leading-tight">0 件</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-circle-check text-emerald-300 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-[10px] text-white/50 uppercase font-bold tracking-wider">準備完了</p>
+              <p id="stat-ready" class="text-xl font-black leading-tight">0 社</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-person-running text-teal-300 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-[10px] text-white/50 uppercase font-bold tracking-wider">稼働中</p>
+              <p id="stat-running" class="text-xl font-black leading-tight">0 社</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 flex flex-wrap gap-3 items-center justify-between shadow-sm">
+          <div class="flex flex-wrap gap-1.5 items-center text-sm">
+            <button onclick="filterClients('all')" id="filter-all" class="filter-btn bg-slate-900 text-white px-3 py-1.5 rounded-lg font-semibold text-xs">すべて</button>
+            <button onclick="filterClients('mine')" id="filter-mine" class="filter-btn bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all">こちら保持</button>
+            <button onclick="filterClients('prep')" id="filter-prep" class="filter-btn bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all">
+              <i class="fa-solid fa-circle-check text-emerald-500 mr-1 text-[11px]"></i>準備完了
+            </button>
+          </div>
+          <div class="relative w-full sm:w-56">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            </span>
+            <input type="text" id="search-input" onkeyup="searchClients()" placeholder="企業名 / SC No. で検索..." class="w-full text-xs pl-9 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400 transition-all bg-slate-50 focus:bg-white">
+          </div>
+        </div>
+
+        <!-- Client List Table Card -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3 px-4 w-24 text-center">SC No.</th>
+                  <th class="py-3 px-4 min-w-[200px]">企業名</th>
+                  <th class="py-3 px-4 min-w-[180px]">フェーズ</th>
+                  <th class="py-3 px-4 min-w-[140px]">ボール保持</th>
+                  <th class="py-3 px-4 w-32 text-center">次回期日</th>
+                  <th class="py-3 px-4 min-w-[200px]">直近の対応</th>
+                  <th class="py-3 px-4 w-40 text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody id="client-table-body" class="divide-y divide-slate-100 text-sm">
+                <!-- Dynamically generated rows go here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: IMMERSIVE 1-PAGE COMPANY PORTAL (Replaces detailed popup) -->
+      <div id="tab-portal" class="tab-content hidden space-y-6">
+        <!-- Top Toolbar Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center gap-3">
+            <button onclick="switchTab('dashboard')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-all flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-left"></i>
+              <span>企業一覧に戻る</span>
+            </button>
+            <div class="h-6 w-px bg-slate-200"></div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 id="portal-company-name" class="text-xl font-bold text-slate-900">企業名</h2>
+                <span id="portal-sc-no" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 text-white tracking-wider">SC: ---</span>
+                <span id="portal-temp-badge" class="text-sm">😍</span>
+              </div>
+              <p class="text-xs text-slate-500 font-medium">営業支援状況、対応推移、タスク、KPIの1ページ集約ポータル</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button id="portal-btn-edit-basic" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-all flex items-center gap-1">
+              <i class="fa-solid fa-pen"></i>
+              <span>基本情報を編集</span>
+            </button>
+            <button id="portal-btn-direction-launch" class="bg-teal-500 hover:bg-teal-600 text-slate-900 text-xs font-bold px-3 py-2 rounded-lg transition-all flex items-center gap-1 shadow-sm">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>MEMBER-Sへディレクション送信</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-Column Immersive Grid System -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- LEFT COLUMN: Status controls & Tool launch buttons (Width: 4) -->
+          <div class="lg:col-span-4 space-y-6">
+            <!-- Basic Controls and Status panel -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+              <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders text-teal-500"></i>
+                <span>ステータス管理</span>
+              </h3>
+              
+              <!-- Direct interactive fields -->
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-400 mb-1">現在のフェーズ</label>
+                  <select id="portal-select-phase" onchange="updatePortalStatus()" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all font-semibold">
+                    <option value="01_定例日程調整中">01_定例日程調整中</option>
+                    <option value="02_会議前リマインド送信済">02_会議前リマインド送信済</option>
+                    <option value="03_リスト・トーク作成中">03_リスト・トーク作成中</option>
+                    <option value="04_リスト先方確認中">04_リスト先方確認中</option>
+                    <option value="05_準備完了（ディレクション可）">05_準備完了（ディレクション可）</option>
+                    <option value="06_メンバーズ稼働中">06_メンバーズ稼働中</option>
+                    <option value="07_サンクスメール送信済">07_サンクスメール送信済</option>
+                    <option value="08_一時ストップ">08_一時ストップ</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-400 mb-1">ボール保持者</label>
+                    <select id="portal-select-ball" onchange="updatePortalStatus()" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all font-semibold">
+                      <option value="こちら（伊藤・丸山）">こちら（伊藤・丸山）</option>
+                      <option value="先方クライアント">先方クライアント</option>
+                      <option value="メンバーズ">メンバーズ</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-400 mb-1">温度感</label>
+                    <select id="portal-select-temp" onchange="updatePortalStatus()" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all font-semibold">
+                      <option value="😍">😍 (良好)</option>
+                      <option value="😐">😐 (普通)</option>
+                      <option value="⚠️">⚠️ (注意)</option>
+                      <option value="💀">💀 (危機)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-400 mb-1">次回アクション期日</label>
+                  <input type="date" id="portal-input-next-action" onchange="updatePortalStatus()" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all font-semibold">
+                </div>
+              </div>
+              
+              <div class="border-t border-slate-100 pt-3 space-y-2 text-xs">
+                <div>
+                  <span class="text-slate-400 font-bold block mb-0.5">担当窓口 & 連絡手段</span>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span id="portal-contact-method" class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">--</span>
+                    <span id="portal-contact-address" class="text-slate-700 font-semibold truncate">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Launcher Tools Repository -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+              <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-folder-open text-sky-500"></i>
+                <span>定例・資材フォルダ</span>
+              </h3>
+              <div class="flex flex-col gap-2">
+                <a id="portal-link-mtg" href="#" target="_blank" class="flex items-center justify-between text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 p-2.5 rounded-lg border border-slate-200 transition-all">
+                  <span><i class="fa-solid fa-video mr-1.5 text-slate-400"></i>定例会議URL (Meet)</span>
+                  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                </a>
+                <a id="portal-link-doc" href="#" target="_blank" class="flex items-center justify-between text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 p-2.5 rounded-lg border border-slate-200 transition-all">
+                  <span><i class="fa-solid fa-folder-open mr-1.5 text-slate-400"></i>定例ドキュメント / フォルダ</span>
+                  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                </a>
+                <a id="portal-link-adjust" href="#" target="_blank" class="flex items-center justify-between text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 p-2.5 rounded-lg border border-slate-200 transition-all">
+                  <span><i class="fa-solid fa-calendar-days mr-1.5 text-slate-400"></i>日程調整 (クラカレ等)</span>
+                  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- MIDDLE COLUMN: Dynamic Chronological Diary / Notebook timeline (Width: 5) -->
+          <div class="lg:col-span-5 flex flex-col space-y-6">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col flex-grow">
+              <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider border-b border-slate-100 pb-2 flex justify-between items-center shrink-0">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-teal-500"></i><span>対応履歴・時系列タイムライン</span></span>
+                <span class="text-[10px] text-slate-400 font-normal">改行対応ノート</span>
+              </h3>
+
+              <!-- Notebook quick-add note field -->
+              <div class="mt-4 space-y-2 shrink-0 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <textarea id="portal-log-textarea" rows="4" placeholder="対応ログ・メール本文など、Enterキーで普通に改行して打つことができます..." class="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white transition-all font-medium"></textarea>
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] text-slate-400"><i class="fa-solid fa-info-circle mr-1"></i>Enterキーで通常改行</span>
+                  <button onclick="savePortalNewLog()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] px-3 py-1.5 rounded-md transition-all flex items-center gap-1">
+                    <i class="fa-solid fa-plus text-[9px]"></i>
+                    <span>履歴をタイムラインへ追記</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Dedicated Chronological list container -->
+              <div id="portal-timeline-container" class="mt-4 overflow-y-auto space-y-3 flex-grow max-h-[350px] pr-1 border-t border-slate-100 pt-3">
+                <!-- Dynamically populated timelines of correspondence -->
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: Client-specific Tasks & KPI tracking cards (Width: 3) -->
+          <div class="lg:col-span-3 space-y-6">
+            <!-- Active Tasks dedicated to this company -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fa-solid fa-check-double text-indigo-500"></i>
+                  <span>紐づくタスク</span>
+                </h3>
+                <button onclick="openAddTaskModal()" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition-all font-bold">+ 追加</button>
+              </div>
+              <div id="portal-tasks-container" class="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                <!-- Dynamically populated tasks specific to this client -->
+              </div>
+            </div>
+
+            <!-- Historical Performance Trackers (KPI) -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fa-solid fa-chart-line text-sky-500"></i>
+                  <span>アポ獲得推移</span>
+                </h3>
+                <button onclick="openAddMetricModal()" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition-all font-bold">+ 登録</button>
+              </div>
+              <div id="portal-kpis-container" class="space-y-3 max-h-[200px] overflow-y-auto pr-1">
+                <!-- Dynamically populated KPI items specific to this client -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 2: TASKS BOARD -->
+      <div id="tab-tasks" class="tab-content hidden space-y-5">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900 tracking-tight">タスクボード (6月期)</h2>
+          <p class="text-slate-500 text-sm mt-0.5">各タスクの期日・状況確認と更新ができます。期限超過はハイライト表示。</p>
+        </div>
+
+        <!-- Task Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="stat-card bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-circle-check text-lg"></i></span>
+            <div>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">完了済</p>
+              <h3 id="task-stat-done" class="text-2xl font-black text-slate-800 leading-tight mt-0.5">-- 件</h3>
+            </div>
+          </div>
+          <div class="stat-card bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-ol text-lg"></i></span>
+            <div>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">リスト作成</p>
+              <h3 id="task-stat-list" class="text-2xl font-black text-slate-800 leading-tight mt-0.5">-- 件</h3>
+            </div>
+          </div>
+          <div class="stat-card bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-message text-lg"></i></span>
+            <div>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">トーク修正</p>
+              <h3 id="task-stat-talk" class="text-2xl font-black text-slate-800 leading-tight mt-0.5">-- 件</h3>
+            </div>
+          </div>
+          <div class="stat-card bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-envelope text-lg"></i></span>
+            <div>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">メール対応</p>
+              <h3 id="task-stat-mail" class="text-2xl font-black text-slate-800 leading-tight mt-0.5">-- 件</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 flex flex-wrap gap-2 items-center justify-between shadow-sm">
+          <div class="flex gap-1.5">
+            <button onclick="filterTasks('all')" id="task-filter-all" class="task-filter-btn bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">すべて</button>
+            <button onclick="filterTasks('リスト')" id="task-filter-list" class="task-filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">リスト</button>
+            <button onclick="filterTasks('トーク')" id="task-filter-talk" class="task-filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">トーク</button>
+            <button onclick="filterTasks('メール')" id="task-filter-mail" class="task-filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">メール</button>
+          </div>
+          <button onclick="openAddTaskModal()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-plus text-[10px]"></i>タスクを追加
+          </button>
+        </div>
+
+        <!-- Task table Card -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-900 text-white text-xs font-bold uppercase tracking-wider border-b border-slate-800">
+                  <th class="py-3 px-4 w-12 text-center">完了</th>
+                  <th class="py-3 px-4 w-32 text-center">期日</th>
+                  <th class="py-3 px-4 min-w-[180px]">会社名</th>
+                  <th class="py-3 px-4 w-28 text-center">分類</th>
+                  <th class="py-3 px-4 min-w-[280px]">内容</th>
+                  <th class="py-3 px-4 w-24 text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody id="task-table-body" class="divide-y divide-slate-100 text-xs">
+                <!-- Dynamically filled task rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: KPI METRICS -->
+      <div id="tab-metrics" class="tab-content hidden space-y-5">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900 tracking-tight">定例用実績・アポ推移</h2>
+          <p class="text-slate-500 text-sm mt-0.5">月次定例でのKPI報告（アポ獲得率 P_rate）を自動集計します。</p>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">合計アプローチ件数（分母）</p>
+            <h3 id="metric-total-demands" class="text-3xl font-black text-slate-800 mt-2">-- 件</h3>
+            <p class="text-xs text-slate-400 mt-3 flex items-center gap-1"><i class="fa-solid fa-circle-info text-sky-400"></i>定例で決議した要望件数の総計</p>
+          </div>
+          <div class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">合計アポイント獲得件数（分子）</p>
+            <h3 id="metric-total-apps" class="text-3xl font-black text-emerald-600 mt-2">-- 件</h3>
+            <p class="text-xs text-slate-400 mt-3 flex items-center gap-1"><i class="fa-solid fa-circle-check text-emerald-500"></i>獲得に成功したアポ件数</p>
+          </div>
+          <div class="stat-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">平均アポイント獲得率（P_rate）</p>
+            <h3 id="metric-avg-rate" class="text-3xl font-black text-sky-600 mt-2">-- %</h3>
+            <p class="text-xs text-slate-400 mt-3 flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up text-sky-500"></i>アポ数 / 要求件数 の総合確率</p>
+          </div>
+        </div>
+
+        <!-- Metric Rows and Actions -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+            <h3 class="font-bold text-slate-800 text-base">リスト・トーク別アポ獲得率推移</h3>
+            <button onclick="openAddMetricModal()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-plus text-[10px]"></i> 実績を追加
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                  <th class="py-3 px-4">紐づく支援先</th>
+                  <th class="py-3 px-4">使用したリスト名</th>
+                  <th class="py-3 px-4">使用トークスクリプト</th>
+                  <th class="py-3 px-4 w-32 text-center">アプローチ要望件数</th>
+                  <th class="py-3 px-4 w-32 text-center">実績架電数</th>
+                  <th class="py-3 px-4 w-32 text-center">アポ獲得数</th>
+                  <th class="py-3 px-4 w-32 text-center">アポ獲得率 (%)</th>
+                  <th class="py-3 px-4 min-w-[200px]">次回会議での方針・決議（備考）</th>
+                </tr>
+              </thead>
+              <tbody id="metrics-table-body" class="divide-y divide-slate-100">
+                <!-- Dynamically generated rows for Metrics -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: INTERNAL CHAT SYSTEM -->
+      <div id="tab-chat" class="tab-content hidden space-y-5">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 tracking-tight">伊藤 ⇄ 丸山 社内相談チャット</h2>
+            <p class="text-slate-500 text-xs mt-0.5">日々の相談・引継ぎをSlack/LINE風チャットで記録できます。データはブラウザに保存されます。</p>
+          </div>
+          
+          <!-- Quick User Toggle Switch -->
+          <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-lg border border-slate-200 text-xs">
+            <span class="font-bold text-slate-500 ml-1">今の発言者:</span>
+            <button onclick="switchCurrentUser('伊藤')" id="chat-user-ito" class="px-3 py-1.5 rounded-md font-bold transition-all bg-white text-slate-800 shadow-sm">伊藤様</button>
+            <button onclick="switchCurrentUser('丸山')" id="chat-user-maru" class="px-3 py-1.5 rounded-md font-bold transition-all text-slate-600">丸山様</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          <!-- Chat Messages Area (Width: 8) -->
+          <div class="lg:col-span-8 flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm h-[520px]">
+            <!-- Messages Log Container -->
+            <div id="chat-messages-container" class="flex-grow p-4 overflow-y-auto space-y-4 bg-slate-50">
+              <!-- Dynamically populated bubble messages -->
+            </div>
+
+            <!-- Input area -->
+            <div class="p-3 border-t border-slate-200 bg-white flex gap-3 items-end">
+              <div class="flex-grow">
+                <textarea id="chat-textarea" rows="2" onkeydown="handleChatSubmit(event)" placeholder="メッセージを入力... (Shift+Enterで改行、Enterで送信)" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 bg-slate-50 transition-all font-medium resize-none"></textarea>
+              </div>
+              <button onclick="sendChatMessage()" class="bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-lg transition-all shadow-sm flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-paper-plane text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat Sidebar Instructions & Template (Width: 4) -->
+          <div class="lg:col-span-4 space-y-4">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3 h-full">
+              <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-info text-sky-500"></i>
+                <span>チャットの便利な使い方</span>
+              </h3>
+              <ul class="text-xs text-slate-600 space-y-2.5 list-disc pl-4 leading-relaxed">
+                <li>右上のスイッチで「伊藤様」「丸山様」を切り替えて擬似メッセージ送信ができます。</li>
+                <li>スプシの行を圧迫せずに、個々のタスクや全体日程の相談をスクロールして遡れます。</li>
+                <li>データはすべてお二人のブラウザ（Local Storage）に安全に保存されるため、ページをリロードしても消えません。</li>
+              </ul>
+
+              <div class="pt-4 border-t border-slate-100">
+                <h4 class="font-bold text-slate-700 text-xs mb-2"><i class="fa-solid fa-clipboard text-indigo-500 mr-1"></i>コピペ相談テンプレート</h4>
+                <div class="flex flex-col gap-2">
+                  <button onclick="insertChatTemplate(1)" class="text-left text-[11px] p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-semibold transition-all">
+                    📌 【依頼】リスト作成指示テンプレート
+                  </button>
+                  <button onclick="insertChatTemplate(2)" class="text-left text-[11px] p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-semibold transition-all">
+                    📌 【報告】リスト作成完了報告
+                  </button>
+                  <button onclick="insertChatTemplate(3)" class="text-left text-[11px] p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-semibold transition-all">
+                    📌 【確認】日程調整の追っかけ相談
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: ADD LOG AND HISTORY (TIME-LINE LOG) -->
+  <div id="log-modal" class="fixed inset-0 z-50 flex items-center justify-center custom-modal-backdrop hidden">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-base" id="log-modal-title">対応履歴（ログ）の編集・追加</h3>
+          <p class="text-slate-400 text-xs mt-0.5" id="log-modal-subtitle">企業名が入ります</p>
+        </div>
+        <button onclick="closeLogModal()" class="text-slate-400 hover:text-white transition-all">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      
+      <!-- Modal Contents -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+        <!-- New Log Input Form -->
+        <div class="space-y-3">
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">新規ログの追加</label>
+          <textarea id="log-textarea" rows="4" placeholder="メール返信内容、来客日程の予定、次回のアクションなどを入力してください..." class="w-full text-sm p-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"></textarea>
+          <div class="flex justify-end">
+            <button onclick="saveNewLog()" class="bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold text-xs px-4 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>ログを追加保存</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- History Timeline -->
+        <div class="space-y-3">
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">過去のログ履歴タイムライン</label>
+          <div id="log-timeline-container" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+            <!-- Timeline records populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PREVIEW AND COPY DIRECTION TO MEMBER-S -->
+  <div id="direction-modal" class="fixed inset-0 z-50 flex items-center justify-center custom-modal-backdrop hidden">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-xl mx-4 overflow-hidden">
+      <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-base">【MEMBER-S】ディレクションコピペ連携</h3>
+          <p class="text-slate-400 text-xs mt-0.5" id="direction-modal-subtitle">YNファクトリー (CA20072)</p>
+        </div>
+        <button onclick="closeDirectionModal()" class="text-slate-400 hover:text-white transition-all">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <p class="text-slate-500 text-xs leading-relaxed">
+          下の枠内のテキストは自動組み立てされた送信文です。
+          <span class="font-bold text-slate-700">「コピー＆MEMBER-S起動」</span>をクリックすると、自動でクリップボードにコピーされ、メンバーズのチャットルームが別タブで立ち上がります。
+        </p>
+
+        <!-- Template Display Container -->
+        <div class="bg-slate-900 text-teal-300 rounded-lg p-4 font-mono text-xs whitespace-pre-wrap leading-relaxed border border-slate-800 max-h-64 overflow-y-auto" id="direction-text-container">
+          <!-- Text Filled Dynamically -->
+        </div>
+
+        <!-- Interactive launch button -->
+        <div class="flex flex-col sm:flex-row gap-2 mt-4">
+          <button onclick="executeDirectionLaunch()" class="flex-grow bg-gradient-to-r from-teal-400 to-sky-500 hover:from-teal-500 hover:to-sky-600 text-slate-900 font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-copy text-sm"></i>
+            <span>コピー ＆ MEMBER-S起動</span>
+          </button>
+          <button onclick="closeDirectionModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl transition-all text-xs">
+            キャンセル
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD/EDIT CLIENT -->
+  <div id="client-modal" class="fixed inset-0 z-50 flex items-center justify-center custom-modal-backdrop hidden">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base" id="client-modal-title">支援企業の追加・編集</h3>
+        <button onclick="closeClientModal()" class="text-slate-400 hover:text-white transition-all">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 flex-grow text-xs">
+        <form id="client-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="hidden" id="edit-client-index">
+          
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">SC No. (管理番号)</label>
+            <input type="text" id="client-sc-no" placeholder="CAXXXXX" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">企業名 <span class="text-rose-500">*</span></label>
+            <input type="text" id="client-name" required placeholder="株式会社〇〇" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">現在の状況 (フェーズ)</label>
+            <select id="client-phase" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+              <option value="01_定例日程調整中">01_定例日程調整中</option>
+              <option value="02_会議前リマインド送信済">02_会議前リマインド送信済</option>
+              <option value="03_リスト・トーク作成中">03_リスト・トーク作成中</option>
+              <option value="04_リスト先方確認中">04_リスト先方確認中</option>
+              <option value="05_準備完了（ディレクション可）">05_準備完了（ディレクション可）</option>
+              <option value="06_メンバーズ稼働中">06_メンバーズ稼働中</option>
+              <option value="07_サンクスメール送信済">07_サンクスメール送信済</option>
+              <option value="08_一時ストップ">08_一時ストップ</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">ボール保持者</label>
+            <select id="client-ball" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+              <option value="こちら（伊藤・丸山）">こちら（伊藤・丸山）</option>
+              <option value="先方クライアント">先方クライアント</option>
+              <option value="メンバーズ">メンバーズ</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">次回アクション期日</label>
+            <input type="date" id="client-next-action" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">連絡手段</label>
+            <select id="client-method" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+              <option value="G-Mail">G-Mail</option>
+              <option value="MEMBER-S">MEMBER-S</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">担当者連絡先</label>
+            <input type="text" id="client-contact" placeholder="sugiura@mri-nagoya.co.jp" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">定例ミーティングURL</label>
+            <input type="url" id="client-mtg-url" placeholder="https://meet.google.com/xxx" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">定例資料フォルダー/ドキュメントURL</label>
+            <input type="url" id="client-doc-url" placeholder="https://docs.google.com/..." class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">ディレクション状況</label>
+            <select id="client-direction" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+              <option value="▼">▼ (待機)</option>
+              <option value="分析中">分析中</option>
+              <option value="提出可">提出可</option>
+              <option value="稼働中">稼働中</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">リスト名</label>
+            <input type="text" id="client-list-name" placeholder="【RM】塾・受験予備校＠全国" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">トークスクリプト名・URL</label>
+            <input type="text" id="client-talk-script" placeholder="【RM】塾向け★テスクロ" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1 md:col-span-2">
+            <label class="block font-bold text-slate-500">日程調整ツールURL (クラカレ等)</label>
+            <input type="url" id="client-adjust-url" placeholder="https://crowd-calendar.com/t/xxx" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+
+          <div class="space-y-1 md:col-span-2">
+            <label class="block font-bold text-slate-500">直近のアクション内容 (1行で簡潔に)</label>
+            <input type="text" id="client-latest-action" placeholder="日程調整メール送信。返信なき場合8日追い掛け。" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+        </form>
+
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-4 mt-4">
+          <button onclick="closeClientModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-2.5 rounded-lg transition-all">
+            キャンセル
+          </button>
+          <button onclick="saveClient()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2.5 rounded-lg transition-all">
+            保存する
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD/EDIT TASK -->
+  <div id="task-modal" class="fixed inset-0 z-50 flex items-center justify-center custom-modal-backdrop hidden">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg mx-4 overflow-hidden">
+      <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base" id="task-modal-title">タスクレコードの編集</h3>
+        <button onclick="closeTaskModal()" class="text-slate-400 hover:text-white transition-all">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4 text-xs">
+        <form id="task-form" class="space-y-3">
+          <input type="hidden" id="edit-task-index">
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">期日</label>
+            <input type="date" id="task-date" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">会社名</label>
+            <input type="text" id="task-company" required placeholder="株式会社〇〇" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">タスク分類</label>
+            <select id="task-category" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+              <option value="リスト">リスト作成</option>
+              <option value="トーク">トーク修正/作成</option>
+              <option value="メール">メール送受信・フォロー</option>
+              <option value="文面作成">文面作成</option>
+              <option value="社内確認">社内確認</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">詳細内容</label>
+            <textarea id="task-content" rows="3" placeholder="タスクの具体的な内容..." class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"></textarea>
+          </div>
+        </form>
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <button onclick="closeTaskModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-2 rounded-lg transition-all">キャンセル</button>
+          <button onclick="saveTask()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg transition-all">タスクを保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD KPI METRIC RECORD -->
+  <div id="metric-modal" class="fixed inset-0 z-50 flex items-center justify-center custom-modal-backdrop hidden">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg mx-4 overflow-hidden">
+      <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base">実績指標レコードの追加</h3>
+        <button onclick="closeMetricModal()" class="text-slate-400 hover:text-white transition-all">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4 text-xs">
+        <form id="metric-form" class="space-y-3">
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">紐づく支援先企業名</label>
+            <select id="metric-client-name" required class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+              <!-- Dynamically populated options for clients -->
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">リスト名</label>
+            <input type="text" id="metric-list-name" required placeholder="【RM】塾・受験予備校＠全国" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">使用トーク名</label>
+            <input type="text" id="metric-talk-name" required placeholder="【RM】塾向け★テスクロ" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="space-y-1">
+              <label class="block font-bold text-slate-500">要望架電数</label>
+              <input type="number" id="metric-demand" value="50" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+            </div>
+            <div class="space-y-1">
+              <label class="block font-bold text-slate-500">実績架電数</label>
+              <input type="number" id="metric-actual" value="50" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+            </div>
+            <div class="space-y-1">
+              <label class="block font-bold text-slate-500">アポ獲得数</label>
+              <input type="number" id="metric-apps" value="3" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="block font-bold text-slate-500">方針・決議内容（備考）</label>
+            <input type="text" id="metric-note" placeholder="アポ率良好のため、ターゲットを広げて追加稼働決定。" class="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all">
+          </div>
+        </form>
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <button onclick="closeMetricModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-2 rounded-lg transition-all">キャンセル</button>
+          <button onclick="saveMetric()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg transition-all">実績を保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT: LOGIC & STATE HANDLING -->
+  <script>
+    // Constants for MEMBER-S url target
+    const MEMBERS_CHAT_URL = "https://mem-bers.jp/chat/152788";
+
+    // Global in-memory App state loaded with your exact client details
+    let appState = {
+      currentUser: "伊藤", // Currently operating user ("伊藤" or "丸山")
+      chatMessages: [
+        { sender: "伊藤", time: "06/04 15:30", text: "丸山さん、合同会社UNAのLP文面作成の進捗はどうですか？次回定例までに伊藤が確認したいです。" },
+        { sender: "丸山", time: "06/04 16:15", text: "伊藤さん、お疲れ様です！UNA様のLP案は現在構成案まで完了しており、本日夕方に初稿をこちらポータルにUPします。ご確認よろしくお願いいたします。" },
+        { sender: "伊藤", time: "06/05 09:30", text: "了解しました。あと市場調査名古屋様の日程調整メール、追掛けお願いします。" },
+        { sender: "丸山", time: "06/05 10:45", text: "かしこまりました。名古屋様の件、追掛けメール送信完了し次回期日を6/8にセットしました！" }
+      ],
+      clients: [
+        {
+          scNo: "CA15784",
+          name: "株式会社市場調査名古屋",
+          phase: "01_定例日程調整中",
+          ball: "こちら（伊藤・丸山）",
+          nextAction: "2026-06-08",
+          method: "G-Mail",
+          contact: "sugiura@mri-nagoya.co.jp",
+          mtgUrl: "https://meet.google.com/xxx",
+          docUrl: "https://docs.google.com/...",
+          direction: "提出可",
+          listName: "【RM】塾・受験予備校＠全国",
+          talkScript: "【RM】塾向け★テスクロ",
+          adjustUrl: "https://crowd-calendar.com/t/xxx",
+          latestAction: "定例MTGの日程調整メール送信済み。返信待ち。",
+          tempEmoji: "😍",
+          logs: [
+            { date: "06/05 10:45", text: "定例MTGの日程調整メールをsugiura様宛に送信。返信期限は月曜朝に設定。" },
+            { date: "06/01 09:30", text: "5月稼働実績の最終レポートをフォルダに格納し、ご報告完了。" }
+          ]
+        },
+        {
+          scNo: "CA17173",
+          name: "株式会社グリッド",
+          phase: "08_一時ストップ",
+          ball: "先方クライアント",
+          nextAction: "2026-06-15",
+          method: "G-Mail",
+          contact: "takakura.0507@gmail.com",
+          mtgUrl: "https://meet.google.com/yyy",
+          docUrl: "https://docs.google.com/...",
+          direction: "提出可",
+          listName: "【RM】金融業リスト＠名古屋",
+          talkScript: "【RM】金融機関アプローチ★スクリプト",
+          adjustUrl: "",
+          latestAction: "先方リスト確認待ちのため一旦ストップ。15日に進捗確認。",
+          tempEmoji: "😍",
+          logs: [
+            { date: "05/25 14:00", text: "先方担当者Takakura様よりご連絡あり。役員会議でリスト精査中のため一旦ステイ。" }
+          ]
+        },
+        {
+          scNo: "CA20144",
+          name: "合同会社UNA",
+          phase: "03_リスト・トーク作成中",
+          ball: "こちら（伊藤・丸山）",
+          nextAction: "2026-06-10",
+          method: "MEMBER-S",
+          contact: "",
+          mtgUrl: "https://meet.google.com/zzz",
+          docUrl: "https://docs.google.com/...",
+          direction: "提出可",
+          listName: "【UNA】EC販売事業社リスト",
+          talkScript: "【UNA】LP/LINE誘導特化型ドラフト",
+          adjustUrl: "",
+          latestAction: "LP文面案とLINE導線の具体案2件を作成中。完成後、伊藤様確認へ。",
+          tempEmoji: "😐",
+          logs: [
+            { date: "06/01 11:20", text: "伊藤さんからの指示を受け、テストマーケティング用LP文面とLINE導線の作成を開始。次回定例で確定予定。" }
+          ]
+        },
+        {
+          scNo: "CA12251",
+          name: "株式会社ヘリオストーム",
+          phase: "04_リスト先方確認中",
+          ball: "先方クライアント",
+          nextAction: "2026-06-06",
+          method: "G-Mail",
+          contact: "r.sato@heliostorm.co.jp",
+          mtgUrl: "https://meet.google.com/aaa",
+          docUrl: "https://docs.google.com/...",
+          direction: "▼",
+          listName: "【HS】新規ITソリューションターゲット",
+          talkScript: "【HS】資料送付＆フォロー★ドラフト",
+          adjustUrl: "",
+          latestAction: "先方より資料請求・リスト確認のメール受信。回答作成して送信予定。",
+          tempEmoji: "💀",
+          logs: [
+            { date: "06/05 09:15", text: "佐藤様よりリストの質問メール受信。質問事項3点について確認回答書を作成中。本日夕方に返信。" }
+          ]
+        }
+      ],
+      tasks: [
+        { done: true, date: "2026-06-05", company: "株式会社市場調査名古屋", category: "メール", content: "日程調整完了の報告" },
+        { done: false, date: "2026-06-08", company: "株式会社市場調査名古屋", category: "メール", content: "5月11日のメールに起こして送る（日程調整完了報告）" },
+        { done: false, date: "2026-06-15", company: "株式会社グリッド", category: "リスト", content: "資料請求とアポ取得先送付、リスト作成対応中" },
+        { done: false, date: "2026-06-15", company: "合同会社UNA", category: "トーク", content: "LINE導線の文面作成・伊藤様確認" },
+        { done: false, date: "2026-06-15", company: "株式会社ヘリオストーム", category: "リスト", content: "質問事項への確認回答リストをまとめ直す" }
+      ],
+      metrics: [
+        { clientName: "株式会社市場調査名古屋", listName: "【RM】塾・受験予備校＠全国", talkName: "【RM】塾向け★テスクロ", demand: 50, actual: 50, apps: 3, note: "アポ獲得良好。次回ターゲットを中等部から高等部に広げて追加。" },
+        { clientName: "合同会社UNA", listName: "【UNA】EC販売事業社リスト", talkName: "【UNA】LP/LINE誘導特化型", demand: 30, actual: 28, apps: 1, note: "LP導線のクリック率は高いがアポに結びつきづらいため文言を一部修正。" },
+        { clientName: "株式会社ヘリオストーム", listName: "【HS】新規ITソリューションターゲット", talkName: "【HS】資料送付＆フォロー★ドラフト", demand: 40, actual: 40, apps: 2, note: "確度は高め。佐藤社長との定例資料作成用にデータをマージ。" }
+      ],
+      activeTab: 'dashboard',
+      activeFilter: 'all',
+      activeTaskFilter: 'all',
+      selectedClientIndexForLog: null,
+      selectedClientIndexForLaunch: null,
+      selectedClientIndexForDetail: null
+    };
+
+    // Initialize Page Content
+    window.onload = function() {
+      const stored = localStorage.getItem('ito_maru_crm_state');
+      if (stored) {
+        try {
+          appState = JSON.parse(stored);
+        } catch (e) {
+          console.log("Local state fallback to default");
+        }
+      }
+      // Populate dropdown for header user selector
+      document.getElementById('header-user-select').value = appState.currentUser || "伊藤";
+      
+      renderAll();
+      renderChat();
+    }
+
+    function saveStateToLocal() {
+      localStorage.setItem('ito_maru_crm_state', JSON.stringify(appState));
+    }
+
+    function renderAll() {
+      renderClients();
+      renderTasks();
+      renderMetrics();
+      renderChat();
+    }
+
+    // Switch active user and synchronize header / chat UI
+    function switchCurrentUser(user) {
+      appState.currentUser = user;
+      document.getElementById('header-user-select').value = user;
+
+      // Update avatars
+      const initial = user === '伊藤' ? '伊' : '丸';
+      const avatarColor = user === '伊藤' 
+        ? 'background: linear-gradient(135deg, #38bdf8, #14b8a6)' 
+        : 'background: linear-gradient(135deg, #a78bfa, #ec4899)';
+      ['header-user-avatar', 'sidebar-user-avatar'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.innerText = initial; el.setAttribute('style', avatarColor); }
+      });
+      const sidebarName = document.getElementById('sidebar-user-name');
+      if (sidebarName) sidebarName.innerText = user + '様';
+      
+      // Update toggle buttons inside chat view if currently active
+      const btnIto = document.getElementById('chat-user-ito');
+      const btnMaru = document.getElementById('chat-user-maru');
+      if (btnIto && btnMaru) {
+        if (user === '伊藤') {
+          btnIto.className = "px-3 py-1.5 rounded-md font-bold transition-all bg-white text-slate-800 shadow-sm";
+          btnMaru.className = "px-3 py-1.5 rounded-md font-bold transition-all text-slate-600 hover:text-slate-900";
+        } else {
+          btnIto.className = "px-3 py-1.5 rounded-md font-bold transition-all text-slate-600 hover:text-slate-900";
+          btnMaru.className = "px-3 py-1.5 rounded-md font-bold transition-all bg-white text-slate-800 shadow-sm";
+        }
+      }
+      saveStateToLocal();
+      showToast(`「${user}様」に切り替えました。`);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+      
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.classList.remove('bg-slate-900', 'text-white', 'shadow-sm');
+        btn.classList.add('text-slate-600', 'hover:bg-slate-50', 'hover:text-slate-900');
+        // Reset icon backgrounds
+        const iconSpan = btn.querySelector('span.w-7');
+        if (iconSpan) {
+          iconSpan.classList.remove('bg-white/15');
+          iconSpan.classList.add('bg-slate-100');
+        }
+      });
+      const activeBtn = document.getElementById('btn-tab-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-50', 'hover:text-slate-900');
+        activeBtn.classList.add('bg-slate-900', 'text-white', 'shadow-sm');
+        const iconSpan = activeBtn.querySelector('span.w-7');
+        if (iconSpan) {
+          iconSpan.classList.remove('bg-slate-100');
+          iconSpan.classList.add('bg-white/15');
+        }
+      }
+
+      if (tabId === 'chat') {
+        document.getElementById('chat-badge-count').classList.add('hidden');
+      }
+
+      appState.activeTab = tabId;
+      saveStateToLocal();
+
+      if (tabId === 'chat') scrollChatToBottom();
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `p-4 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-3 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto max-w-sm ${
+        type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+      }`;
+      
+      const icon = type === 'success' ? '<i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>' : '<i class="fa-solid fa-circle-exclamation text-rose-500 text-lg"></i>';
+      toast.innerHTML = `${icon} <span class="whitespace-pre-line">${message}</span>`;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-[-10px]');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // RENDER: Client List Rows
+    function renderClients() {
+      const tbody = document.getElementById('client-table-body');
+      tbody.innerHTML = '';
+
+      let list = [...appState.clients];
+
+      if (appState.activeFilter === 'mine') {
+        list = list.filter(c => c.ball.includes('伊藤') || c.ball.includes('丸山'));
+      } else if (appState.activeFilter === 'prep') {
+        list = list.filter(c => c.phase.includes('準備完了'));
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+
+      // Update summary strip
+      const total = appState.clients.length;
+      const overdue = appState.clients.filter(c => c.nextAction && c.nextAction <= today).length;
+      const ready = appState.clients.filter(c => c.phase.startsWith('05')).length;
+      const running = appState.clients.filter(c => c.phase.startsWith('06')).length;
+      if (document.getElementById('stat-total')) {
+        document.getElementById('stat-total').innerText = total + ' 社';
+        document.getElementById('stat-overdue').innerText = overdue + ' 件';
+        document.getElementById('stat-ready').innerText = ready + ' 社';
+        document.getElementById('stat-running').innerText = running + ' 社';
+      }
+
+      // Phase display helpers
+      const phaseConfig = {
+        '01': { cls: 'bg-sky-50 border border-sky-200 text-sky-700', icon: 'fa-calendar-days', color: 'text-sky-500' },
+        '02': { cls: 'bg-blue-50 border border-blue-200 text-blue-700', icon: 'fa-bell', color: 'text-blue-500' },
+        '03': { cls: 'bg-amber-50 border border-amber-200 text-amber-700', icon: 'fa-pen-to-square', color: 'text-amber-500' },
+        '04': { cls: 'bg-rose-50 border border-rose-200 text-rose-700', icon: 'fa-eye', color: 'text-rose-500' },
+        '05': { cls: 'bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold', icon: 'fa-circle-check', color: 'text-emerald-500' },
+        '06': { cls: 'bg-teal-50 border border-teal-200 text-teal-700', icon: 'fa-person-running', color: 'text-teal-500' },
+        '07': { cls: 'bg-slate-100 border border-slate-200 text-slate-500', icon: 'fa-paper-plane', color: 'text-slate-400' },
+        '08': { cls: 'bg-slate-100 border border-slate-200 text-slate-400', icon: 'fa-pause', color: 'text-slate-400' },
+      };
+
+      list.forEach((client, idx) => {
+        const origIdx = appState.clients.findIndex(c => c.scNo === client.scNo && c.name === client.name);
+
+        const phaseKey = client.phase.substring(0, 2);
+        const pc = phaseConfig[phaseKey] || { cls: 'bg-slate-100 text-slate-700', icon: 'fa-circle', color: 'text-slate-400' };
+        const phaseLabel = client.phase.replace(/^\d+_/, '');
+
+        let dateIndicator = "-";
+        let dateClass = "text-slate-500 text-center text-xs font-medium";
+        if (client.nextAction) {
+          const actionDate = new Date(client.nextAction);
+          const fmtDate = `${actionDate.getMonth() + 1}/${actionDate.getDate()}`;
+          dateIndicator = fmtDate;
+          if (client.nextAction <= today) {
+            dateClass = "bg-rose-50 border border-rose-200 text-rose-700 font-bold px-2 py-1 rounded-lg text-center inline-block w-full text-xs deadline-alert";
+          } else {
+            dateClass = "bg-slate-100 text-slate-700 font-semibold px-2 py-1 rounded-lg text-center inline-block w-full text-xs";
+          }
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "client-row transition-all border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-semibold text-slate-400 text-center text-[11px]">${client.scNo || '-'}</td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-2">
+              <div>
+                <div class="font-bold text-slate-800 cursor-pointer hover:text-teal-600 transition-colors text-sm flex items-center gap-1.5" onclick="openCompanyPortal(${origIdx})">
+                  <span>${client.name}</span>
+                  <span class="text-teal-500 text-[10px] opacity-0 group-hover:opacity-100 transition-all">→ポータル</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">${client.contact || '連絡先未登録'}</div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-4">
+            <span class="phase-pill ${pc.cls}">
+              <i class="fa-solid ${pc.icon} ${pc.color} text-[10px]"></i>
+              ${phaseLabel}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-xs font-semibold text-slate-600">${client.ball}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="${dateClass}">${dateIndicator}</span>
+          </td>
+          <td class="py-3 px-4">
+            <div class="text-xs text-slate-700 line-clamp-1 font-medium" title="${client.latestAction || '-'}">
+              ${client.latestAction || '—'}
+            </div>
+            <div class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+              <i class="fa-regular fa-clock"></i>
+              <span>${client.logs && client.logs.length > 0 ? client.logs[0].date + ' : ' + client.logs[0].text.substring(0, 20) + '…' : '履歴なし'}</span>
+            </div>
+          </td>
+          <td class="py-3 px-4">
+            <div class="flex justify-center gap-1.5 items-center">
+              <button onclick="openCompanyPortal(${origIdx})" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1" title="専用ポータル">
+                <i class="fa-solid fa-folder-open text-teal-500 text-xs"></i>
+                <span class="text-[10px]">カルテ</span>
+              </button>
+              <button onclick="openLogModal(${origIdx})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs p-2 rounded-lg transition-all" title="ログ追加">
+                <i class="fa-solid fa-note-sticky text-sm"></i>
+              </button>
+              <button onclick="openDirectionModal(${origIdx})" class="bg-teal-500 hover:bg-teal-600 text-white font-bold text-xs p-2 rounded-lg transition-all" title="MEMBER-Sディレクション">
+                <i class="fa-solid fa-paper-plane text-sm"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterClients(type) {
+      appState.activeFilter = type;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-slate-900', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+      });
+      const activeBtn = document.getElementById('filter-' + type);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+        activeBtn.classList.add('bg-slate-900', 'text-white');
+      }
+      renderClients();
+    }
+
+    function searchClients() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      const rows = document.querySelectorAll('#client-table-body tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (text.includes(q)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    }
+
+    // Portal view rendering and state binds
+    function openCompanyPortal(index) {
+      appState.selectedClientIndexForDetail = index;
+      const client = appState.clients[index];
+
+      switchTab('portal');
+
+      document.getElementById('portal-company-name').innerText = client.name;
+      document.getElementById('portal-sc-no').innerText = `SC: ${client.scNo || '未登録'}`;
+      document.getElementById('portal-temp-badge').innerText = client.tempEmoji || '😍';
+
+      document.getElementById('portal-select-phase').value = client.phase;
+      document.getElementById('portal-select-ball').value = client.ball;
+      document.getElementById('portal-select-temp').value = client.tempEmoji || '😍';
+      document.getElementById('portal-input-next-action').value = client.nextAction || '';
+
+      document.getElementById('portal-contact-method').innerText = client.method || 'G-Mail';
+      document.getElementById('portal-contact-address').innerText = client.contact || '連絡先未設定';
+
+      const linkMtg = document.getElementById('portal-link-mtg');
+      if (client.mtgUrl) { 
+        linkMtg.href = client.mtgUrl; 
+        linkMtg.className = "flex items-center justify-between text-xs font-semibold text-slate-700 bg-sky-50 hover:bg-sky-100 p-2.5 rounded-lg border border-sky-200 transition-all"; 
+      } else { 
+        linkMtg.removeAttribute('href'); 
+        linkMtg.className = "flex items-center justify-between text-xs font-semibold text-slate-300 bg-slate-100 p-2.5 rounded-lg border border-slate-200 cursor-not-allowed"; 
+      }
+
+      const linkDoc = document.getElementById('portal-link-doc');
+      if (client.docUrl) { 
+        linkDoc.href = client.docUrl; 
+        linkDoc.className = "flex items-center justify-between text-xs font-semibold text-slate-700 bg-teal-50 hover:bg-teal-100 p-2.5 rounded-lg border border-teal-200 transition-all"; 
+      } else { 
+        linkDoc.removeAttribute('href'); 
+        linkDoc.className = "flex items-center justify-between text-xs font-semibold text-slate-300 bg-slate-100 p-2.5 rounded-lg border border-slate-200 cursor-not-allowed"; 
+      }
+
+      const linkAdjust = document.getElementById('portal-link-adjust');
+      if (client.adjustUrl) { 
+        linkAdjust.href = client.adjustUrl; 
+        linkAdjust.className = "flex items-center justify-between text-xs font-semibold text-slate-700 bg-indigo-50 hover:bg-indigo-100 p-2.5 rounded-lg border border-indigo-200 transition-all"; 
+      } else { 
+        linkAdjust.removeAttribute('href'); 
+        linkAdjust.className = "flex items-center justify-between text-xs font-semibold text-slate-300 bg-slate-100 p-2.5 rounded-lg border border-slate-200 cursor-not-allowed"; 
+      }
+
+      document.getElementById('portal-btn-edit-basic').onclick = function() {
+        openEditClientModal(index);
+      };
+      document.getElementById('portal-btn-direction-launch').onclick = function() {
+        openDirectionModal(index);
+      };
+
+      renderPortalTimeline();
+      renderPortalTasks(client.name);
+      renderPortalKPIs(client.name);
+    }
+
+    function updatePortalStatus() {
+      const idx = appState.selectedClientIndexForDetail;
+      if (idx === null) return;
+
+      const oldPhase = appState.clients[idx].phase;
+      const newPhase = document.getElementById('portal-select-phase').value;
+
+      appState.clients[idx].phase = newPhase;
+      appState.clients[idx].ball = document.getElementById('portal-select-ball').value;
+      appState.clients[idx].tempEmoji = document.getElementById('portal-select-temp').value;
+      appState.clients[idx].nextAction = document.getElementById('portal-input-next-action').value;
+
+      if (newPhase.startsWith("05_準備完了") && !oldPhase.startsWith("05_準備完了")) {
+        sendVirtualEmailNotification(appState.clients[idx]);
+      }
+
+      document.getElementById('portal-temp-badge').innerText = appState.clients[idx].tempEmoji;
+
+      showToast("企業ポータルのステータスを即座に更新しました！");
+      saveStateToLocal();
+      renderClients();
+    }
+
+    function renderPortalTimeline() {
+      const container = document.getElementById('portal-timeline-container');
+      container.innerHTML = '';
+      const idx = appState.selectedClientIndexForDetail;
+      if (idx === null) return;
+
+      const logs = appState.clients[idx].logs || [];
+      if (logs.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-400 text-center py-6">対応記録はまだありません。上の入力欄から詳細を入力してください。</div>';
+        return;
+      }
+
+      logs.forEach(log => {
+        const item = document.createElement('div');
+        item.className = "bg-white border border-slate-200 p-3 rounded-lg text-xs shadow-sm flex flex-col gap-1.5 transition-all";
+        item.innerHTML = `
+          <div class="flex justify-between text-[10px] text-slate-400 font-bold border-b border-slate-100 pb-1">
+            <span>更新日: ${log.date}</span>
+            <span><i class="fa-solid fa-clock text-teal-500"></i></span>
+          </div>
+          <div class="text-slate-700 whitespace-pre-wrap font-medium">${log.text}</div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function savePortalNewLog() {
+      const idx = appState.selectedClientIndexForDetail;
+      if (idx === null) return;
+
+      const textarea = document.getElementById('portal-log-textarea');
+      const text = textarea.value.trim();
+      if (!text) {
+        showToast("詳細ログの本文を入力してください。", "error");
+        return;
+      }
+
+      const now = new Date();
+      const dateStr = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      
+      appState.clients[idx].logs.unshift({
+        date: dateStr,
+        text: text
+      });
+
+      appState.clients[idx].latestAction = text.split('\n')[0];
+
+      showToast("1ページタイムラインに履歴を追加保存しました！");
+      textarea.value = "";
+      
+      renderPortalTimeline();
+      saveStateToLocal();
+      renderClients();
+    }
+
+    function renderPortalTasks(clientName) {
+      const container = document.getElementById('portal-tasks-container');
+      container.innerHTML = '';
+
+      const matchedTasks = appState.tasks.filter(t => t.company === clientName);
+
+      if (matchedTasks.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-400 text-center py-4 border border-dashed border-slate-200 rounded-lg">タスクが設定されていません</div>';
+        return;
+      }
+
+      matchedTasks.forEach(task => {
+        const origIdx = appState.tasks.findIndex(t => t.company === task.company && t.content === task.content);
+        const item = document.createElement('div');
+        item.className = `p-2 rounded-lg text-xs flex items-center justify-between border ${task.done ? 'bg-slate-50 border-slate-200 text-slate-400 line-through' : 'bg-white border-slate-200 text-slate-700 font-semibold'}`;
+        item.innerHTML = `
+          <div class="flex items-center gap-2">
+            <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTaskDone(${origIdx}); setTimeout(() => renderPortalTasks('${clientName}'), 100);" class="w-3.5 h-3.5 text-teal-600 rounded">
+            <span class="text-[10px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded">${task.category}</span>
+            <span class="truncate max-w-[120px]">${task.content}</span>
+          </div>
+          <span class="text-[9px] text-slate-400">${task.date.replace('2026-', '')}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderPortalKPIs(clientName) {
+      const container = document.getElementById('portal-kpis-container');
+      container.innerHTML = '';
+
+      const matchedKPIs = appState.metrics.filter(m => m.clientName === clientName);
+
+      if (matchedKPIs.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-400 text-center py-4 border border-dashed border-slate-200 rounded-lg">実績データが登録されていません</div>';
+        return;
+      }
+
+      matchedKPIs.forEach(kpi => {
+        const rate = kpi.demand > 0 ? ((kpi.apps / kpi.demand) * 100).toFixed(1) : "0.0";
+        const item = document.createElement('div');
+        item.className = "bg-slate-50 p-2.5 rounded-lg border border-slate-200/60";
+        item.innerHTML = `
+          <div class="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1">
+            <span class="truncate max-w-[140px]">${kpi.listName}</span>
+            <span class="text-sky-600 bg-sky-50 border border-sky-100 px-1 rounded">${rate}%</span>
+          </div>
+          <div class="grid grid-cols-3 text-center text-[10px]">
+            <div>
+              <p class="text-slate-400">要望数</p>
+              <p class="font-bold text-slate-700">${kpi.demand}件</p>
+            </div>
+            <div>
+              <p class="text-slate-400">架電実績</p>
+              <p class="font-bold text-slate-700">${kpi.actual}件</p>
+            </div>
+            <div>
+              <p class="text-slate-400">獲得アポ</p>
+              <p class="font-bold text-emerald-600">${kpi.apps}件</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Client modal configurations
+    function openEditClientModal(index) {
+      document.getElementById('client-modal-title').innerText = "支援企業情報の編集";
+      document.getElementById('edit-client-index').value = index;
+
+      const c = appState.clients[index];
+      document.getElementById('client-sc-no').value = c.scNo;
+      document.getElementById('client-name').value = c.name;
+      document.getElementById('client-phase').value = c.phase;
+      document.getElementById('client-ball').value = c.ball;
+      document.getElementById('client-next-action').value = c.nextAction || "";
+      document.getElementById('client-method').value = c.method;
+      document.getElementById('client-contact').value = c.contact;
+      document.getElementById('client-mtg-url').value = c.mtgUrl;
+      document.getElementById('client-doc-url').value = c.docUrl;
+      document.getElementById('client-direction').value = c.direction;
+      document.getElementById('client-list-name').value = c.listName || "";
+      document.getElementById('client-talk-script').value = c.talkScript || "";
+      document.getElementById('client-adjust-url').value = c.adjustUrl || "";
+      document.getElementById('client-latest-action').value = c.latestAction || "";
+
+      document.getElementById('client-modal').classList.remove('hidden');
+    }
+
+    function openAddClientModal() {
+      document.getElementById('client-modal-title').innerText = "新規支援企業の追加";
+      document.getElementById('edit-client-index').value = "-1";
+      document.getElementById('client-form').reset();
+      document.getElementById('client-modal').classList.remove('hidden');
+    }
+
+    function closeClientModal() {
+      document.getElementById('client-modal').classList.add('hidden');
+    }
+
+    function saveClient() {
+      const idx = parseInt(document.getElementById('edit-client-index').value);
+      const clientData = {
+        scNo: document.getElementById('client-sc-no').value,
+        name: document.getElementById('client-name').value,
+        phase: document.getElementById('client-phase').value,
+        ball: document.getElementById('client-ball').value,
+        nextAction: document.getElementById('client-next-action').value,
+        method: document.getElementById('client-method').value,
+        contact: document.getElementById('client-contact').value,
+        mtgUrl: document.getElementById('client-mtg-url').value,
+        docUrl: document.getElementById('client-doc-url').value,
+        direction: document.getElementById('client-direction').value,
+        listName: document.getElementById('client-list-name').value,
+        talkScript: document.getElementById('client-talk-script').value,
+        adjustUrl: document.getElementById('client-adjust-url').value,
+        latestAction: document.getElementById('client-latest-action').value,
+        logs: idx >= 0 ? appState.clients[idx].logs : []
+      };
+
+      if (!clientData.name) {
+        showToast("企業名を入力してください。", "error");
+        return;
+      }
+
+      if (clientData.phase.startsWith("05_準備完了") && (idx < 0 || !appState.clients[idx].phase.startsWith("05_準備完了"))) {
+        sendVirtualEmailNotification(clientData);
+      }
+
+      if (idx >= 0) {
+        appState.clients[idx] = clientData;
+        showToast("企業情報を変更・保存しました！");
+      } else {
+        appState.clients.push(clientData);
+        showToast("新規企業をリストに追加しました！");
+      }
+
+      closeClientModal();
+      saveStateToLocal();
+      renderAll();
+
+      if (appState.selectedClientIndexForDetail === idx) {
+        openCompanyPortal(idx);
+      }
+    }
+
+    function sendVirtualEmailNotification(client) {
+      showToast(`✉️ 【伊藤様宛に自動メール通知送信】\n丸山様から「${client.name}」のディレクション準備完了通知が送信されました！`, 'success');
+      
+      // Auto-append simulated log to system chats
+      const dateStr = getSimulatedTimestamp();
+      appState.chatMessages.push({
+        sender: "丸山",
+        time: dateStr,
+        text: `システム通知：【準備完了】「${client.name}」のリストとトークが揃いました。ディレクション送信可能です！`
+      });
+      saveStateToLocal();
+      renderChat();
+    }
+
+    // Modal Timeline Logging Function
+    function openLogModal(index) {
+      appState.selectedClientIndexForLog = index;
+      const client = appState.clients[index];
+
+      document.getElementById('log-modal-title').innerText = `対応履歴（詳細メモ）：${client.name}`;
+      document.getElementById('log-modal-subtitle').innerText = `SC ID: ${client.scNo || '未登録'} | 現フェーズ: ${client.phase}`;
+      document.getElementById('log-textarea').value = "";
+
+      renderTimeline();
+      document.getElementById('log-modal').classList.remove('hidden');
+    }
+
+    function closeLogModal() {
+      document.getElementById('log-modal').classList.add('hidden');
+      appState.selectedClientIndexForLog = null;
+    }
+
+    function renderTimeline() {
+      const container = document.getElementById('log-timeline-container');
+      container.innerHTML = '';
+      
+      const idx = appState.selectedClientIndexForLog;
+      if (idx === null) return;
+
+      const logs = appState.clients[idx].logs || [];
+      if (logs.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-400 text-center py-6">過去の対応履歴（ログ）はまだありません。</div>';
+        return;
+      }
+
+      logs.forEach(log => {
+        const item = document.createElement('div');
+        item.className = "bg-slate-50 border border-slate-100 p-3 rounded-lg text-xs leading-relaxed space-y-1.5";
+        item.innerHTML = `
+          <div class="flex justify-between text-[10px] text-slate-400 font-bold border-b border-slate-100 pb-1">
+            <span>更新日時: ${log.date}</span>
+            <span><i class="fa-regular fa-clock"></i></span>
+          </div>
+          <div class="text-slate-700 whitespace-pre-wrap font-medium">${log.text}</div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function saveNewLog() {
+      const idx = appState.selectedClientIndexForLog;
+      if (idx === null) return;
+
+      const text = document.getElementById('log-textarea').value.trim();
+      if (!text) {
+        showToast("ログの本文を入力してください。", "error");
+        return;
+      }
+
+      const dateStr = getSimulatedTimestamp();
+      
+      appState.clients[idx].logs.unshift({
+        date: dateStr,
+        text: text
+      });
+
+      appState.clients[idx].latestAction = text.split('\n')[0];
+
+      showToast("時系列ログを追記・保存しました！");
+      document.getElementById('log-textarea').value = "";
+      
+      renderTimeline();
+      saveStateToLocal();
+      renderClients();
+    }
+
+    // Direction text copypasta helpers
+    function openDirectionModal(index) {
+      appState.selectedClientIndexForLaunch = index;
+      const c = appState.clients[index];
+
+      document.getElementById('direction-modal-subtitle').innerText = `${c.name} (SC ID: ${c.scNo || '未登録'})`;
+
+      const now = new Date();
+      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const fmtPeriod = `${now.getMonth() + 1}/${now.getDate()} ~ ${nextWeek.getMonth() + 1}/${nextWeek.getDate()}`;
+
+      const template = `【ディレクション依頼】
+・企業名（SCと一致させてください）：${c.name}
+・SC ID：${c.scNo || '-'}
+・日程調整ツール：■クラカレ　${c.adjustUrl || 'なし'}
+・リスト名（SCの登録名と一致させてください）：
+${c.listName || '未定（作成中）'}
+・トークスクリプトURL：
+${c.talkScript || '未定（作成中）'}
+・稼働日：${fmtPeriod}
+・希望の時間帯：なし
+・稼働要望件数：50件
+・戦略：アポイント獲得のため`;
+
+      document.getElementById('direction-text-container').innerText = template;
+      document.getElementById('direction-modal').classList.remove('hidden');
+    }
+
+    function closeDirectionModal() {
+      document.getElementById('direction-modal').classList.add('hidden');
+      appState.selectedClientIndexForLaunch = null;
+    }
+
+    function executeDirectionLaunch() {
+      const textToCopy = document.getElementById('direction-text-container').innerText;
+
+      const copyAndOpen = () => {
+        showToast("📋 ディレクション文をコピーしました！\nMEMBER-Sを起動します。");
+        setTimeout(() => {
+          window.open(MEMBERS_CHAT_URL, "_blank");
+          closeDirectionModal();
+        }, 800);
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy).then(copyAndOpen).catch(() => {
+          // fallback
+          const ta = document.createElement("textarea");
+          ta.value = textToCopy;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          copyAndOpen();
+        });
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = textToCopy;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); copyAndOpen(); }
+        catch(e) { showToast("手動でコピーしてください。", "error"); }
+        document.body.removeChild(ta);
+      }
+    }
+
+    // RENDER: Tasks Tab Controls
+    function renderTasks() {
+      const tbody = document.getElementById('task-table-body');
+      tbody.innerHTML = '';
+
+      let list = [...appState.tasks];
+
+      if (appState.activeTaskFilter !== 'all') {
+        list = list.filter(t => t.category === appState.activeTaskFilter);
+      }
+
+      document.getElementById('task-stat-done').innerText = `${appState.tasks.filter(t => t.done).length} / ${appState.tasks.length} 件`;
+      document.getElementById('task-stat-list').innerText = `${appState.tasks.filter(t => !t.done && t.category === 'リスト').length} 件`;
+      document.getElementById('task-stat-talk').innerText = `${appState.tasks.filter(t => !t.done && t.category === 'トーク').length} 件`;
+      document.getElementById('task-stat-mail').innerText = `${appState.tasks.filter(t => !t.done && t.category === 'メール').length} 件`;
+
+      const today = new Date().toISOString().split('T')[0];
+
+      list.forEach((task, idx) => {
+        const origIdx = appState.tasks.findIndex(t => t.company === task.company && t.content === task.content);
+
+        let catClass = "bg-slate-100 text-slate-700";
+        if (task.category === 'リスト') catClass = "bg-indigo-50 border border-indigo-100 text-indigo-700";
+        if (task.category === 'トーク') catClass = "bg-amber-50 border border-amber-100 text-amber-700";
+        if (task.category === 'メール') catClass = "bg-sky-50 border border-sky-100 text-sky-700";
+        if (task.category === '文面作成') catClass = "bg-teal-50 border border-teal-100 text-teal-700";
+        if (task.category === '社内確認') catClass = "bg-emerald-50 border border-emerald-100 text-emerald-700";
+
+        let dateClass = "text-slate-500";
+        if (!task.done && task.date && task.date <= today) {
+          dateClass = "bg-rose-50 border border-rose-100 text-rose-700 px-2 py-0.5 rounded font-bold text-center inline-block w-full";
+        } else if (task.date) {
+          dateClass = "font-semibold text-slate-700";
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = `hover:bg-slate-50/80 transition-all border-b border-slate-100 ${task.done ? 'opacity-60 bg-slate-50/50' : ''}`;
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-center">
+            <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTaskDone(${origIdx})" class="w-4.5 h-4.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer">
+          </td>
+          <td class="py-3 px-4 text-center">
+            <span class="${dateClass}">${task.date ? task.date.replace('2026-', '') : '-'}</span>
+          </td>
+          <td class="py-3 px-4 font-bold text-slate-800">${task.company}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${catClass}">${task.category}</span>
+          </td>
+          <td class="py-3 px-4 text-slate-600 font-medium ${task.done ? 'line-through text-slate-400' : ''}">${task.content}</td>
+          <td class="py-3 px-4 text-center flex justify-center gap-1">
+            <button onclick="openEditTaskModal(${origIdx})" class="text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="deleteTask(${origIdx})" class="text-rose-400 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleTaskDone(index) {
+      appState.tasks[index].done = !appState.tasks[index].done;
+      showToast(appState.tasks[index].done ? "タスクを完了にしました！" : "タスクを再開しました");
+      saveStateToLocal();
+      renderTasks();
+    }
+
+    function filterTasks(cat) {
+      appState.activeTaskFilter = cat;
+      document.querySelectorAll('.task-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-slate-900', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+      });
+      const mapping = { 'all': 'all', 'リスト': 'list', 'トーク': 'talk', 'メール': 'mail' };
+      const activeBtn = document.getElementById('task-filter-' + mapping[cat]);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+        activeBtn.classList.add('bg-slate-900', 'text-white');
+      }
+      renderTasks();
+    }
+
+    function openAddTaskModal() {
+      document.getElementById('task-modal-title').innerText = "タスクの追加";
+      document.getElementById('edit-task-index').value = "-1";
+      document.getElementById('task-form').reset();
+      document.getElementById('task-modal').classList.remove('hidden');
+    }
+
+    function openEditTaskModal(index) {
+      document.getElementById('task-modal-title').innerText = "タスクの編集";
+      document.getElementById('edit-task-index').value = index;
+
+      const t = appState.tasks[index];
+      document.getElementById('task-date').value = t.date;
+      document.getElementById('task-company').value = t.company;
+      document.getElementById('task-category').value = t.category;
+      document.getElementById('task-content').value = t.content;
+
+      document.getElementById('task-modal').classList.remove('hidden');
+    }
+
+    function closeTaskModal() {
+      document.getElementById('task-modal').classList.add('hidden');
+    }
+
+    function saveTask() {
+      const idx = parseInt(document.getElementById('edit-task-index').value);
+      const taskData = {
+        done: idx >= 0 ? appState.tasks[idx].done : false,
+        date: document.getElementById('task-date').value,
+        company: document.getElementById('task-company').value,
+        category: document.getElementById('task-category').value,
+        content: document.getElementById('task-content').value
+      };
+
+      if (!taskData.company) {
+        showToast("会社名を入力してください。", "error");
+        return;
+      }
+
+      if (idx >= 0) {
+        appState.tasks[idx] = taskData;
+        showToast("タスクを更新しました。");
+      } else {
+        appState.tasks.push(taskData);
+        showToast("新しいタスクを追加しました！");
+      }
+
+      closeTaskModal();
+      saveStateToLocal();
+      renderTasks();
+
+      const currPortalClient = appState.selectedClientIndexForDetail;
+      if (currPortalClient !== null) {
+        renderPortalTasks(appState.clients[currPortalClient].name);
+      }
+    }
+
+    function deleteTask(index) {
+      if (confirm("このタスクを削除してもよろしいですか？")) {
+        appState.tasks.splice(index, 1);
+        showToast("タスクを削除しました。");
+        saveStateToLocal();
+        renderTasks();
+
+        const currPortalClient = appState.selectedClientIndexForDetail;
+        if (currPortalClient !== null) {
+          renderPortalTasks(appState.clients[currPortalClient].name);
+        }
+      }
+    }
+
+    // RENDER: Performance Metrics KPI Indicators
+    function renderMetrics() {
+      const tbody = document.getElementById('metrics-table-body');
+      tbody.innerHTML = '';
+
+      let totalDemand = 0;
+      let totalApps = 0;
+
+      appState.metrics.forEach(m => {
+        totalDemand += parseInt(m.demand || 0);
+        totalApps += parseInt(m.apps || 0);
+
+        const rate = m.demand > 0 ? ((m.apps / m.demand) * 100).toFixed(1) : "0.0";
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition-all border-b border-slate-100 text-xs text-slate-700 font-medium";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-slate-900">${m.clientName || '-'}</td>
+          <td class="py-3 px-4 font-semibold text-slate-700">${m.listName}</td>
+          <td class="py-3 px-4 text-slate-500">${m.talkName}</td>
+          <td class="py-3 px-4 text-center font-bold text-slate-600">${m.demand}件</td>
+          <td class="py-3 px-4 text-center text-slate-500">${m.actual}件</td>
+          <td class="py-3 px-4 text-center font-bold text-emerald-600">${m.apps}件</td>
+          <td class="py-3 px-4 text-center">
+            <span class="bg-sky-50 border border-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-bold">${rate}%</span>
+          </td>
+          <td class="py-3 px-4 text-slate-500 leading-relaxed">${m.note || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('metric-total-demands').innerText = `${totalDemand} 件`;
+      document.getElementById('metric-total-apps').innerText = `${totalApps} 件`;
+      
+      const avgRate = totalDemand > 0 ? ((totalApps / totalDemand) * 100).toFixed(1) : "0.0";
+      document.getElementById('metric-avg-rate').innerText = `${avgRate} %`;
+
+      const dropdown = document.getElementById('metric-client-name');
+      dropdown.innerHTML = '';
+      appState.clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.innerText = c.name;
+        dropdown.appendChild(opt);
+      });
+    }
+
+    function openAddMetricModal() {
+      document.getElementById('metric-form').reset();
+      document.getElementById('metric-modal').classList.remove('hidden');
+    }
+
+    function closeMetricModal() {
+      document.getElementById('metric-modal').classList.add('hidden');
+    }
+
+    function saveMetric() {
+      const mData = {
+        clientName: document.getElementById('metric-client-name').value,
+        listName: document.getElementById('metric-list-name').value,
+        talkName: document.getElementById('metric-talk-name').value,
+        demand: parseInt(document.getElementById('metric-demand').value || 0),
+        actual: parseInt(document.getElementById('metric-actual').value || 0),
+        apps: parseInt(document.getElementById('metric-apps').value || 0),
+        note: document.getElementById('metric-note').value
+      };
+
+      if (!mData.listName || !mData.talkName) {
+        showToast("リスト名とトーク名を入力してください。", "error");
+        return;
+      }
+
+      appState.metrics.push(mData);
+      showToast("実績指標（アポ獲得率データ）を新しく登録しました！");
+      closeMetricModal();
+      saveStateToLocal();
+      renderMetrics();
+
+      const currPortalClient = appState.selectedClientIndexForDetail;
+      if (currPortalClient !== null) {
+        renderPortalKPIs(appState.clients[currPortalClient].name);
+      }
+    }
+
+    // RENDER: Chat System Component
+    function renderChat() {
+      const container = document.getElementById('chat-messages-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (!appState.chatMessages) {
+        appState.chatMessages = [];
+      }
+
+      if (appState.chatMessages.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-400 text-center py-10">メッセージがありません。下の入力欄から送信してチャットを開始してください。</div>';
+        return;
+      }
+
+      // Synchronize toggle button highlights
+      const btnIto = document.getElementById('chat-user-ito');
+      const btnMaru = document.getElementById('chat-user-maru');
+      if (btnIto && btnMaru) {
+        if (appState.currentUser === '伊藤') {
+          btnIto.className = "px-3 py-1.5 rounded-md font-bold bg-white text-slate-800 shadow-sm cursor-pointer";
+          btnMaru.className = "px-3 py-1.5 rounded-md font-bold text-slate-500 hover:text-slate-700 cursor-pointer";
+        } else {
+          btnIto.className = "px-3 py-1.5 rounded-md font-bold text-slate-500 hover:text-slate-700 cursor-pointer";
+          btnMaru.className = "px-3 py-1.5 rounded-md font-bold bg-white text-slate-800 shadow-sm cursor-pointer";
+        }
+      }
+
+      appState.chatMessages.forEach(msg => {
+        const item = document.createElement('div');
+        item.className = "flex flex-col gap-1 w-full";
+        
+        // Setup bubble alignment style (Ito: right sided fog-blue, Maru: left sided mint-green)
+        const isSelf = msg.sender === appState.currentUser;
+        
+        let bubbleClass = "bg-white text-slate-800 border-slate-200";
+        let alignClass = "items-start";
+        let textBubbleWrapper = "rounded-2xl rounded-tl-none bg-white border border-slate-200/80 shadow-sm";
+        
+        if (msg.sender === '伊藤') {
+          bubbleClass = "bg-sky-50 text-sky-900 border-sky-100";
+          alignClass = isSelf ? "items-end" : "items-start";
+          textBubbleWrapper = isSelf 
+            ? "rounded-2xl rounded-tr-none bg-sky-50 border border-sky-100 shadow-sm" 
+            : "rounded-2xl rounded-tl-none bg-sky-50 border border-sky-100 shadow-sm";
+        } else {
+          bubbleClass = "bg-emerald-50 text-emerald-900 border-emerald-100";
+          alignClass = isSelf ? "items-end" : "items-start";
+          textBubbleWrapper = isSelf 
+            ? "rounded-2xl rounded-tr-none bg-emerald-50 border border-emerald-100 shadow-sm" 
+            : "rounded-2xl rounded-tl-none bg-emerald-50 border border-emerald-100 shadow-sm";
+        }
+
+        item.className = `flex flex-col ${alignClass} w-full max-w-[85%] ${isSelf ? 'ml-auto' : 'mr-auto'}`;
+        
+        // Simulating systemic notice highlights
+        if (msg.text.includes("システム通知")) {
+          item.className = "w-full flex justify-center py-2";
+          item.innerHTML = `
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-3 py-1.5 text-[10px] font-semibold text-center flex items-center gap-1.5">
+              <i class="fa-solid fa-bell animate-pulse"></i>
+              <span>${msg.text}</span>
+            </div>
+          `;
+        } else {
+          item.innerHTML = `
+            <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mb-0.5">
+              <span>${msg.sender}様</span>
+              <span>•</span>
+              <span>${msg.time}</span>
+            </div>
+            <div class="p-3 text-xs whitespace-pre-wrap leading-relaxed ${textBubbleWrapper}">
+              ${msg.text}
+            </div>
+          `;
+        }
+
+        container.appendChild(item);
+      });
+
+      scrollChatToBottom();
+    }
+
+    function scrollChatToBottom() {
+      const container = document.getElementById('chat-messages-container');
+      if (container) {
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 50);
+      }
+    }
+
+    function handleChatSubmit(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    }
+
+    function sendChatMessage() {
+      const textarea = document.getElementById('chat-textarea');
+      const text = textarea.value.trim();
+      if (!text) return;
+
+      const dateStr = getSimulatedTimestamp();
+
+      appState.chatMessages.push({
+        sender: appState.currentUser,
+        time: dateStr,
+        text: text
+      });
+
+      textarea.value = '';
+      saveStateToLocal();
+      renderChat();
+    }
+
+    function getSimulatedTimestamp() {
+      const now = new Date();
+      return `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function insertChatTemplate(type) {
+      const textarea = document.getElementById('chat-textarea');
+      let text = '';
+      if (type === 1) {
+        text = `【丸山さんへ リスト作成依頼】
+企業名：株式会社市場調査名古屋
+期限：○月○日AM
+指示内容：塾関連で、東京都内の高等部を優先して50社リスト作成をお願いいたします。
+URL等：定例フォルダ内に資材があります。`;
+      } else if (type === 2) {
+        text = `【伊藤さんへ リスト作成完了】
+企業名：合同会社UNA
+内容：EC販売事業社リスト（30件）の作成が完了いたしました！
+スプシ内のリスト列にリンクをセットしています。ご確認お願いいたします！`;
+      } else if (type === 3) {
+        text = `【伊藤さんへ 確認】
+市場調査名古屋様の定例日程調整メールですが、期限を明日AMにセットして追いかける形で進めてもよろしいでしょうか？`;
+      }
+      textarea.value = text;
+      textarea.focus();
+    }
+  </script>
+</body>
+</html>
