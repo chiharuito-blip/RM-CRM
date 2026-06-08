@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ITO & MARUYAMA CRM — 営業支援管理システム</title>
-  <!-- Firebase SDK (compat版 = CDNで動くバージョン) -->
+  <!-- Firebase SDK (compat版) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -127,7 +128,7 @@
 <body class="bg-[#f5f6f8] text-slate-800 font-sans min-h-screen flex flex-col">
 
   <!-- Top Navigation Bar -->
-  <header class="bg-[#0f172a] text-white py-3.5 px-6 shadow-lg flex justify-between items-center sticky top-0 z-30 border-b border-white/5">
+  <header id="main-header" class="bg-[#0f172a] text-white py-3.5 px-6 shadow-lg flex justify-between items-center sticky top-0 z-30 border-b border-white/5 hidden">
     <div class="flex items-center gap-3.5">
       <div class="relative">
         <div class="bg-gradient-to-br from-teal-400 to-sky-500 w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20">
@@ -159,8 +160,84 @@
       <button onclick="if(confirm('Firebaseのデータをリセットしますか？全データが消えます。')) { firebase.database().ref('crmState').remove().then(() => location.reload()); }" class="text-xs text-slate-400 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg border border-white/10">
         <i class="fa-solid fa-rotate-left mr-1.5 text-[11px]"></i>リセット
       </button>
+
+      <button onclick="handleLogout()" class="text-xs text-rose-400 hover:text-white hover:bg-rose-500/80 transition-all bg-white/5 px-3 py-2 rounded-lg border border-white/10 flex items-center gap-1.5">
+        <i class="fa-solid fa-right-from-bracket text-[11px]"></i>ログアウト
+      </button>
     </div>
   </header>
+
+  <!-- ログイン画面（未認証時のみ表示） -->
+  <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0f172a]">
+    <div class="w-full max-w-sm mx-4">
+
+      <!-- Logo block -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-400 to-sky-500 shadow-2xl shadow-sky-500/30 mb-4">
+          <i class="fa-solid fa-rocket text-2xl text-slate-900"></i>
+        </div>
+        <h1 class="text-2xl font-black text-white tracking-tight">ITO &amp; MARUYAMA CRM</h1>
+        <p class="text-slate-400 text-sm mt-1">営業支援管理システム — ログイン</p>
+      </div>
+
+      <!-- Card -->
+      <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-2xl">
+
+        <!-- Error banner -->
+        <div id="login-error" class="hidden mb-4 bg-rose-500/20 border border-rose-500/30 text-rose-300 text-sm px-4 py-3 rounded-xl flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+          <span id="login-error-msg">メールアドレスまたはパスワードが間違っています。</span>
+        </div>
+
+        <!-- Form -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">メールアドレス</label>
+            <input
+              type="email"
+              id="login-email"
+              placeholder="example@email.com"
+              class="w-full bg-white/10 border border-white/10 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all"
+              onkeydown="if(event.key==='Enter') attemptLogin()"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">パスワード</label>
+            <div class="relative">
+              <input
+                type="password"
+                id="login-password"
+                placeholder="パスワードを入力"
+                class="w-full bg-white/10 border border-white/10 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all pr-12"
+                onkeydown="if(event.key==='Enter') attemptLogin()"
+              >
+              <button
+                onclick="togglePasswordVisibility()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-all"
+                tabindex="-1"
+                type="button"
+              >
+                <i id="pw-eye-icon" class="fa-solid fa-eye text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          <button
+            id="login-btn"
+            onclick="attemptLogin()"
+            class="w-full bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-400 hover:to-sky-400 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-sky-500/20 mt-2 flex items-center justify-center gap-2"
+          >
+            <span id="login-btn-text">ログイン</span>
+            <i id="login-spinner" class="fa-solid fa-spinner animate-spin hidden text-sm"></i>
+          </button>
+        </div>
+
+        <p class="text-center text-slate-600 text-xs mt-6">
+          アカウントは管理者が発行します。<br>ご不明点は伊藤様までご連絡ください。
+        </p>
+      </div>
+    </div>
+  </div>
 
   <!-- 同期バナー -->
   <div id="sync-banner" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
@@ -169,7 +246,7 @@
   </div>
 
   <!-- Main Contents Wrapper -->
-  <main class="flex-grow flex flex-col lg:flex-row">
+  <main id="main-app-content" class="flex-grow flex flex-col lg:flex-row hidden">
     <!-- Sidebar / Tab Navigation -->
     <aside class="w-full lg:w-60 bg-white border-r border-slate-200 p-4 flex flex-col gap-1 shrink-0">
       <div class="text-[10px] font-bold text-slate-400 uppercase px-3 mb-3 tracking-widest">メインメニュー</div>
@@ -1008,8 +1085,142 @@
       appId: "1:680702185058:web:95934c0deababcae8fcb3b"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const db       = firebase.database();
+    const auth     = firebase.auth();
     const STATE_REF = db.ref('crmState');
+
+    // ─── メールとユーザー名のマッピング ──────────────────────
+    // Firebase Console で登録したメールアドレスに合わせて変更してください
+    const USER_EMAIL_MAP = {
+      '伊藤': 'chiharu_ito@aidma-hd.jp',   // ← 実際のメールに変更
+      '丸山': 'mai.maruyama.rma@gmail.com' // ← 実際のメールに変更
+    };
+    // 逆引き用
+    const EMAIL_USER_MAP = Object.fromEntries(
+      Object.entries(USER_EMAIL_MAP).map(([name, email]) => [email, name])
+    );
+
+    // ─── Auth状態監視（ページ起動時に1回だけ呼ばれる） ──────────
+    auth.onAuthStateChanged(user => {
+      const loginScreen = document.getElementById('login-screen');
+      const mainContent = document.getElementById('main-app-content');
+      if (user) {
+        // ログイン済み → CRM表示
+        loginScreen.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        document.getElementById('main-header').classList.remove('hidden');
+
+        // メールからユーザー名を推定してセット（ヘッダーselectを同期）
+        const detectedName = EMAIL_USER_MAP[user.email] || '伊藤';
+        appState.currentUser = detectedName;
+        localStorage.setItem('crm_current_user', detectedName);
+        document.getElementById('header-user-select').value = detectedName;
+        // ヘッダーのselectを読み取り専用化（Auth連動のため切り替え不要）
+        const sel = document.getElementById('header-user-select');
+        if (sel) sel.disabled = true;
+        // アバター更新
+        const initial = detectedName === '伊藤' ? '伊' : '丸';
+        ['header-user-avatar', 'sidebar-user-avatar'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerText = initial;
+        });
+        const sn = document.getElementById('sidebar-user-name');
+        if (sn) sn.innerText = detectedName + '様';
+
+        // Firebase データ購読開始
+        startFirebaseSync();
+      } else {
+        // 未ログイン → ログイン画面表示
+        loginScreen.classList.remove('hidden');
+        mainContent.classList.add('hidden');
+      }
+    });
+
+    // ─── ログイン処理 ─────────────────────────────────────────
+    function attemptLogin() {
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('login-error');
+      const errorMsg = document.getElementById('login-error-msg');
+      const btn      = document.getElementById('login-btn');
+      const spinner  = document.getElementById('login-spinner');
+      const btnText  = document.getElementById('login-btn-text');
+
+      if (!email || !password) {
+        errorMsg.innerText = 'メールアドレスとパスワードを入力してください。';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+
+      // ローディング状態
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      btnText.innerText = 'ログイン中...';
+      errorDiv.classList.add('hidden');
+
+      auth.signInWithEmailAndPassword(email, password)
+        .catch(err => {
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          btnText.innerText = 'ログイン';
+
+          const msgs = {
+            'auth/user-not-found':  'このメールアドレスは登録されていません。',
+            'auth/wrong-password':  'パスワードが間違っています。',
+            'auth/invalid-email':   'メールアドレスの形式が正しくありません。',
+            'auth/too-many-requests': 'ログイン試行が多すぎます。しばらく待ってから再試行してください。',
+            'auth/invalid-credential': 'メールアドレスまたはパスワードが間違っています。',
+          };
+          errorMsg.innerText = msgs[err.code] || `ログインエラー: ${err.message}`;
+          errorDiv.classList.remove('hidden');
+        });
+    }
+
+    // ─── ログアウト処理 ───────────────────────────────────────
+    function handleLogout() {
+      if (!confirm('ログアウトしますか？')) return;
+      auth.signOut().then(() => {
+        STATE_REF.off();
+        document.getElementById('main-header').classList.add('hidden');
+        document.getElementById('main-app-content').classList.add('hidden');
+        // ログインフォームをリセット
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
+        document.getElementById('login-error').classList.add('hidden');
+      });
+    }
+
+    // ─── パスワード表示切替 ───────────────────────────────────
+    function togglePasswordVisibility() {
+      const pw  = document.getElementById('login-password');
+      const ico = document.getElementById('pw-eye-icon');
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        ico.className = 'fa-solid fa-eye-slash text-sm';
+      } else {
+        pw.type = 'password';
+        ico.className = 'fa-solid fa-eye text-sm';
+      }
+    }
+
+    // ─── Firebase Sync を Auth後に起動 ───────────────────────
+    function startFirebaseSync() {
+      STATE_REF.on('value', snap => {
+        const data = snap.val();
+        if (data) {
+          const myUser = appState.currentUser;
+          appState = { ...appState, ...data };
+          appState.currentUser = myUser;
+          if (!appState.clients)      appState.clients      = [];
+          if (!appState.tasks)        appState.tasks        = [];
+          if (!appState.metrics)      appState.metrics      = [];
+          if (!appState.chatMessages) appState.chatMessages = [];
+        }
+        renderAll();
+        renderChat();
+        hideSyncBanner();
+      });
+    }
 
     // 接続状態インジケーター
     db.ref('.info/connected').on('value', snap => {
@@ -1142,31 +1353,8 @@
     const _localUser = localStorage.getItem('crm_current_user') || '伊藤';
 
     window.onload = function() {
-      // ローカルのユーザー設定を復元
-      appState.currentUser = _localUser;
-      document.getElementById('header-user-select').value = _localUser;
-
-      // 接続確認UI
-      showSyncBanner('接続中...');
-
-      // Firebase から全データをリアルタイム購読
-      STATE_REF.on('value', snap => {
-        const data = snap.val();
-        if (data) {
-          // currentUser は上書きしない（各自独立）
-          const myUser = appState.currentUser;
-          appState = { ...appState, ...data };
-          appState.currentUser = myUser;
-          // 配列が null になる場合の安全措置
-          if (!appState.clients) appState.clients = [];
-          if (!appState.tasks) appState.tasks = [];
-          if (!appState.metrics) appState.metrics = [];
-          if (!appState.chatMessages) appState.chatMessages = [];
-        }
-        renderAll();
-        renderChat();
-        hideSyncBanner();
-      });
+      // Auth状態は onAuthStateChanged が管理するのでここでは何もしない
+      // （ログイン後に startFirebaseSync が呼ばれる）
     };
 
     function saveStateToLocal() {
