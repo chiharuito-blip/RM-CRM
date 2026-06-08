@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ITO & MARUYAMA CRM — 営業支援管理システム</title>
+  <!-- Firebase SDK (compat版 = CDNで動くバージョン) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,11 +150,23 @@
         </select>
       </div>
 
-      <button onclick="if(confirm('デモデータを初期状態に戻しますか？')) { localStorage.removeItem('ito_maru_crm_state'); location.reload(); }" class="text-xs text-slate-400 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg border border-white/10">
+      <!-- 同期ステータス -->
+      <div id="sync-indicator" class="flex items-center gap-1.5 text-[11px] font-semibold bg-white/5 px-3 py-2 rounded-lg border border-white/10">
+        <i class="fa-solid fa-circle text-slate-500 text-[8px]"></i>
+        <span class="text-slate-400">接続中...</span>
+      </div>
+
+      <button onclick="if(confirm('Firebaseのデータをリセットしますか？全データが消えます。')) { firebase.database().ref('crmState').remove().then(() => location.reload()); }" class="text-xs text-slate-400 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg border border-white/10">
         <i class="fa-solid fa-rotate-left mr-1.5 text-[11px]"></i>リセット
       </button>
     </div>
   </header>
+
+  <!-- 同期バナー -->
+  <div id="sync-banner" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+    <i class="fa-solid fa-arrows-rotate animate-spin text-teal-400"></i>
+    <span>Firebaseに接続中...</span>
+  </div>
 
   <!-- Main Contents Wrapper -->
   <main class="flex-grow flex flex-col lg:flex-row">
@@ -982,6 +997,31 @@
 
   <!-- JAVASCRIPT: LOGIC & STATE HANDLING -->
   <script>
+    // Firebase 初期化
+    const firebaseConfig = {
+      apiKey: "AIzaSyBPqISM0oyJXZfPgfLNufjY_Koee6b7bno",
+      authDomain: "rm-crm-d6d88.firebaseapp.com",
+      databaseURL: "https://rm-crm-d6d88-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "rm-crm-d6d88",
+      storageBucket: "rm-crm-d6d88.firebasestorage.app",
+      messagingSenderId: "680702185058",
+      appId: "1:680702185058:web:95934c0deababcae8fcb3b"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const STATE_REF = db.ref('crmState');
+
+    // 接続状態インジケーター
+    db.ref('.info/connected').on('value', snap => {
+      const el = document.getElementById('sync-indicator');
+      if (!el) return;
+      if (snap.val()) {
+        el.innerHTML = '<i class="fa-solid fa-circle text-emerald-400 text-[8px] animate-pulse"></i><span class="text-emerald-400">同期中</span>';
+      } else {
+        el.innerHTML = '<i class="fa-solid fa-circle text-amber-400 text-[8px]"></i><span class="text-amber-400">オフライン</span>';
+      }
+    });
+
     // Constants for MEMBER-S url target
     const MEMBERS_CHAT_URL = "https://mem-bers.jp/chat/152788";
 
@@ -1097,25 +1137,57 @@
       selectedClientIndexForDetail: null
     };
 
-    // Initialize Page Content
+    // ─── Firebase リアルタイム同期 ─────────────────────────
+    // currentUser だけはブラウザローカルに保持（各自独立）
+    const _localUser = localStorage.getItem('crm_current_user') || '伊藤';
+
     window.onload = function() {
-      const stored = localStorage.getItem('ito_maru_crm_state');
-      if (stored) {
-        try {
-          appState = JSON.parse(stored);
-        } catch (e) {
-          console.log("Local state fallback to default");
+      // ローカルのユーザー設定を復元
+      appState.currentUser = _localUser;
+      document.getElementById('header-user-select').value = _localUser;
+
+      // 接続確認UI
+      showSyncBanner('接続中...');
+
+      // Firebase から全データをリアルタイム購読
+      STATE_REF.on('value', snap => {
+        const data = snap.val();
+        if (data) {
+          // currentUser は上書きしない（各自独立）
+          const myUser = appState.currentUser;
+          appState = { ...appState, ...data };
+          appState.currentUser = myUser;
+          // 配列が null になる場合の安全措置
+          if (!appState.clients) appState.clients = [];
+          if (!appState.tasks) appState.tasks = [];
+          if (!appState.metrics) appState.metrics = [];
+          if (!appState.chatMessages) appState.chatMessages = [];
         }
-      }
-      // Populate dropdown for header user selector
-      document.getElementById('header-user-select').value = appState.currentUser || "伊藤";
-      
-      renderAll();
-      renderChat();
-    }
+        renderAll();
+        renderChat();
+        hideSyncBanner();
+      });
+    };
 
     function saveStateToLocal() {
-      localStorage.setItem('ito_maru_crm_state', JSON.stringify(appState));
+      // currentUser と activeTab はローカルに保存
+      localStorage.setItem('crm_current_user', appState.currentUser);
+
+      // 共有データを Firebase に保存（currentUser は除外）
+      const { currentUser, ...sharedState } = appState;
+      STATE_REF.set(sharedState).catch(err => {
+        console.error('Firebase save error:', err);
+        showToast('同期エラーが発生しました。接続を確認してください。', 'error');
+      });
+    }
+
+    function showSyncBanner(msg) {
+      const el = document.getElementById('sync-banner');
+      if (el) { el.innerText = msg; el.classList.remove('hidden'); }
+    }
+    function hideSyncBanner() {
+      const el = document.getElementById('sync-banner');
+      if (el) el.classList.add('hidden');
     }
 
     function renderAll() {
@@ -1638,17 +1710,15 @@
     }
 
     function sendVirtualEmailNotification(client) {
-      showToast(`✉️ 【伊藤様宛に自動メール通知送信】\n丸山様から「${client.name}」のディレクション準備完了通知が送信されました！`, 'success');
+      showToast(`✉️ 【自動通知】「${client.name}」のディレクション準備完了！`, 'success');
       
-      // Auto-append simulated log to system chats
+      // Firebase に push（相手にもリアルタイムで届く）
       const dateStr = getSimulatedTimestamp();
-      appState.chatMessages.push({
+      STATE_REF.child('chatMessages').push({
         sender: "丸山",
         time: dateStr,
         text: `システム通知：【準備完了】「${client.name}」のリストとトークが揃いました。ディレクション送信可能です！`
       });
-      saveStateToLocal();
-      renderChat();
     }
 
     // Modal Timeline Logging Function
@@ -2034,6 +2104,13 @@ ${c.talkScript || '未定（作成中）'}
         appState.chatMessages = [];
       }
 
+      // Firebase の push() はオブジェクト形式で返るので配列に変換
+      let msgs = appState.chatMessages;
+      if (msgs && !Array.isArray(msgs)) {
+        msgs = Object.values(msgs);
+      }
+      appState.chatMessages = msgs || [];
+
       if (appState.chatMessages.length === 0) {
         container.innerHTML = '<div class="text-xs text-slate-400 text-center py-10">メッセージがありません。下の入力欄から送信してチャットを開始してください。</div>';
         return;
@@ -2129,16 +2206,18 @@ ${c.talkScript || '未定（作成中）'}
       if (!text) return;
 
       const dateStr = getSimulatedTimestamp();
-
-      appState.chatMessages.push({
+      const msg = {
         sender: appState.currentUser,
         time: dateStr,
         text: text
+      };
+
+      // Firebase に直接 push（リアルタイムで相手に届く）
+      STATE_REF.child('chatMessages').push(msg).catch(err => {
+        showToast('メッセージの送信に失敗しました。', 'error');
       });
 
       textarea.value = '';
-      saveStateToLocal();
-      renderChat();
     }
 
     function getSimulatedTimestamp() {
